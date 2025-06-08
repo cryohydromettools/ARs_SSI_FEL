@@ -35,32 +35,25 @@ filename = '/home/cr2/cmtorres/ERA5/MSLP_daily_anomalies.nc'
 mslp_an = xr.open_dataset(filename)/100
 
 
-filename = 'data/HW_ARs_days_SSI_new.csv'
-HWs_ARS_KJS = pd.read_csv(filename, sep= '\t')
-HWs_ARS_KJS['date'] = pd.to_datetime(HWs_ARS_KJS['date'])
+filename = 'data/HW_ARs_SSI_new.csv'
+HWs_ARS_KJS_just = pd.read_csv(filename, sep= '\t')
+HWs_ARS_KJS_just['date'] = pd.to_datetime(HWs_ARS_KJS_just['date'])
 
-filename = '/home/cr2/cmtorres/DATA/KSJ_AWS/KSJ_met_daily_1996_2020.csv'
-df = pd.read_csv(filename, sep='\t')
-df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-df.rename(columns={'Timestamp':'date'}, inplace=True)
+AR_shape = xr.open_dataset('data/ARs_vLHT_HW_SSI.nc')
 
-HWs_ARs_KJS_sel = pd.merge(HWs_ARS_KJS, df, how="left", on="date")
+#HWs_ARS_KJS_just['date'][1]
 
-events = HWs_ARs_KJS_sel.label.drop_duplicates().reset_index(drop=True)
-
-for i in events:
-    print(i)
-    time_range = HWs_ARS_KJS[HWs_ARS_KJS['label']==i].date.to_list()
-
-    date_start = pd.to_datetime(min(time_range)).strftime('%Y-%m-%d')
-    date_end = pd.to_datetime(max(time_range)).strftime('%Y-%m-%d')
+for i in range(len(HWs_ARS_KJS_just)):
+    time_range = HWs_ARS_KJS_just['date'][i]
+    print(time_range)
+    date = pd.to_datetime((time_range)).strftime('%Y-%m-%d')
 
     #time_range = HWs_ARS_KJS['date'].to_list()
 
-    t2m_anom = T2_an.sel(time=time_range).mean('time').t2m_anomaly
-    mslp_anom = mslp_an.sel(time=time_range).mean('time').msl_anomaly
-    u_anom = U10_an.sel(time=time_range).mean('time').u10_anomaly  # U wind anomaly (e.g., at 500 hPa)
-    v_anom = V10_an.sel(time=time_range).mean('time').v10_anomaly  # V wind anomaly
+    t2m_anom = T2_an.sel(time=time_range).t2m_anomaly
+    Z500_anom = Z500_an.sel(time=time_range).z_anomaly[0]
+    u_anom = U10_an.sel(time=time_range).u10_anomaly  # U wind anomaly (e.g., at 500 hPa)
+    v_anom = V10_an.sel(time=time_range).v10_anomaly  # V wind anomaly
 
     # --- Define Mercator projection ---
     proj = ccrs.Mercator()
@@ -77,10 +70,10 @@ for i in events:
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot T2m anomalies as shaded contours ---
-    levels_t2m = np.arange(-6, 7, 1)
+    levels_t2m = np.arange(-7, 8, 1)
     cmap = plt.get_cmap("RdBu_r")
     t2m_plot = ax.contourf(
-        mslp_anom.longitude, mslp_anom.latitude, t2m_anom,
+        Z500_anom.longitude, Z500_anom.latitude, t2m_anom,
         levels=levels_t2m,
         cmap=cmap,
         extend='both',
@@ -89,10 +82,10 @@ for i in events:
     cbar = plt.colorbar(t2m_plot, ax=ax, orientation='vertical', pad=0.02, label="T2m Anomaly (°C)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
-    levels_z500 = [lev for lev in np.arange(-40, 41, 2.5) if lev != 0]  # Exclude zero
+    levels_z500 = [lev for lev in np.arange(-250, 251, 50) if lev != 0]  # Exclude zero
     linestyles = ['dashed' if lev < 0 else 'solid' for lev in levels_z500]
     contour = ax.contour(
-        mslp_anom.longitude, mslp_anom.latitude, mslp_anom,
+        Z500_anom.longitude, Z500_anom.latitude, Z500_anom,
         levels=levels_z500,
         colors='black',
         linewidths=1.0,
@@ -112,14 +105,14 @@ for i in events:
     )
 
     # --- Title and layout ---
-    ax.set_title(f"T2m (shaded), Z500 (black contours), and Wind (grey vectors) Anomalies\n{date_start} to {date_end}")
+    ax.set_title(f"T2m (shaded), Z500 (black contours), and Wind (grey vectors) Anomalies\n{date}")
 
-    fig.savefig(f"fig/T2_{i}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+    fig.savefig(f"fig/T2_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
-    u_anom = U10_an.sel(time=time_range).mean('time').u10_anomaly
-    v_anom = V10_an.sel(time=time_range).mean('time').v10_anomaly
-    mslp_anom = mslp_an.sel(time=time_range).mean('time').msl_anomaly
+    u_anom = U10_an.sel(time=time_range).u10_anomaly
+    v_anom = V10_an.sel(time=time_range).v10_anomaly
+    mslp_anom = mslp_an.sel(time=time_range).msl_anomaly
 
     # --- Compute wind speed ---
     wind_speed = np.sqrt(u_anom**2 + v_anom**2)
@@ -139,7 +132,7 @@ for i in events:
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot wind speed as color fill ---
-    levels_ws = np.arange(0, 11, 1)
+    levels_ws = np.arange(0, 15, 1)
     cmap_ws = plt.get_cmap("viridis")
     ws_plot = ax.contourf(
         wind_speed.longitude, wind_speed.latitude, wind_speed,
@@ -151,7 +144,7 @@ for i in events:
     cbar = plt.colorbar(ws_plot, ax=ax, orientation='vertical', pad=0.02, label="Wind Speed (m/s)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
-    levels_z500 = [lev for lev in np.arange(-40, 41, 2.5) if lev != 0]  # Exclude zero
+    levels_z500 = [lev for lev in np.arange(-40, 41, 5) if lev != 0]  # Exclude zero
     linestyles = ['dashed' if lev < 0 else 'solid' for lev in levels_z500]
     contour = ax.contour(
         mslp_anom.longitude, mslp_anom.latitude, mslp_anom,
@@ -173,15 +166,15 @@ for i in events:
     )
 
     # --- Title and layout ---
-    ax.set_title(f"Wind Speed (shaded), MSLP (contours) and Wind Vectors\n{date_start} to {date_end}")
+    ax.set_title(f"Wind Speed (shaded), MSLP (contours) and Wind Vectors\n{date}")
 
-    fig.savefig(f"fig/WS_{i}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+    fig.savefig(f"fig/WS_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
-    precip = PRECIP.sel(time=time_range).mean('time').tp_daily_sum  # Use .tp_anomaly se for anomalia
-    mslp_anom = mslp_an.sel(time=time_range).mean('time').msl_anomaly
-    u_anom = U10_an.sel(time=time_range).mean('time').u10_anomaly
-    v_anom = V10_an.sel(time=time_range).mean('time').v10_anomaly
+    precip = PRECIP.sel(time=time_range).tp_daily_sum  # Use .tp_anomaly se for anomalia
+    mslp_anom = mslp_an.sel(time=time_range).msl_anomaly
+    u_anom = U10_an.sel(time=time_range).u10_anomaly
+    v_anom = V10_an.sel(time=time_range).v10_anomaly
 
     # --- Define projection ---
     proj = ccrs.Mercator()
@@ -198,7 +191,7 @@ for i in events:
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot precipitation (mm) ---
-    levels_precip = np.arange(0, 4.1, 0.5)
+    levels_precip = np.arange(0, 8.1, 0.5)
     cmap_precip = plt.get_cmap("Blues")
     precip_plot = ax.contourf(
         precip.longitude, precip.latitude, precip,  # Convert from m to mm
@@ -210,7 +203,7 @@ for i in events:
     cbar = plt.colorbar(precip_plot, ax=ax, orientation='vertical', pad=0.02, label="Precipitation (mm/day)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
-    levels_z500 = [lev for lev in np.arange(-40, 41, 2.5) if lev != 0]  # Exclude zero
+    levels_z500 = [lev for lev in np.arange(-40, 41, 5.0) if lev != 0]  # Exclude zero
     linestyles = ['dashed' if lev < 0 else 'solid' for lev in levels_z500]
     contour = ax.contour(
         mslp_anom.longitude, mslp_anom.latitude, mslp_anom,
@@ -232,15 +225,15 @@ for i in events:
     )
 
     # --- Title ---
-    ax.set_title(f"Precipitation (shaded), MSLP (contours) and Wind Vectors\n{date_start} to {date_end}")
+    ax.set_title(f"Precipitation (shaded), MSLP (contours) and Wind Vectors\n{date}")
 
-    fig.savefig(f"fig/RRR_{i}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+    fig.savefig(f"fig/RRR_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
 
     # --- Subset and average data over time range ---
-    IVTv_sel = IVTv.sel(time=time_range).mean('time').viwvn_12UTC
-    IVTu_sel = IVTu.sel(time=time_range).mean('time').viwve_12UTC
-    Z500_anom = Z500_an.sel(time=time_range).mean('time').z_anomaly[0]
+    IVTv_sel = IVTv.sel(time=time_range).viwvn_12UTC
+    IVTu_sel = IVTu.sel(time=time_range).viwve_12UTC
+    Z500_anom = Z500_an.sel(time=time_range).z_anomaly[0]
 
 
     # --- Compute wind speed ---
@@ -261,7 +254,7 @@ for i in events:
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot precipitation (mm) ---
-    levels_precip = np.arange(100, 430, 25)
+    levels_precip = np.arange(100, 701, 50)
     cmap_precip = plt.get_cmap("rainbow")
     precip_plot = ax.contourf(
         IVT.longitude, IVT.latitude, IVT,  # Convert from m to mm
@@ -320,7 +313,10 @@ for i in events:
     # Ensure nothing outside the box is clipped
     ax_inset.set_clip_on(False)
 
-    # --- Title ---
-    ax.set_title(f"IVT mean (shaded), MSLP (contours) and IVT Vectors (u,v)\n{date_start} to {date_end}")
+    ax.contour(AR_shape.lon, AR_shape.lat, AR_shape.sel(time=time_range).enar_binary_tag, levels=[0.5], 
+               colors='magenta', linewidths=2, transform=ccrs.PlateCarree())
 
-    fig.savefig(f"fig/IVT_{i}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+    # --- Title ---
+    ax.set_title(f"IVT mean (shaded), MSLP (contours) and IVT Vectors (u,v)\n{date}")
+
+    fig.savefig(f"fig/IVT_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
