@@ -14,6 +14,9 @@ T2_an = xr.open_dataset(filename)
 filename = '/home/cr2/cmtorres/ERA5/Z500_daily_anomalies.nc'
 Z500_an = xr.open_dataset(filename)/9.98
 
+filename = '/home/cr2/cmtorres/ERA5/Z850_daily_anomalies.nc'
+Z500_an = xr.open_dataset(filename)/9.98
+
 filename = '/home/cr2/cmtorres/ERA5/V10_daily_anomalies.nc'
 V10_an = xr.open_dataset(filename)
 
