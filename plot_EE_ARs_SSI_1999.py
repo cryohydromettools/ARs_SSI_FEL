@@ -73,7 +73,11 @@ for i in range(len(HWs_ARS_KJS_just)):
     proj = ccrs.Mercator()
 
     # --- Create figure and axes with Mercator projection ---
-    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
+#    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
+    fig, axs = plt.subplots(2, 2, figsize=(16, 10), subplot_kw={'projection': proj})
+    axs = axs.flatten()
+
+    ax = axs[0]
 
     # --- Add geographic features ---
     ax.coastlines(resolution='50m')
@@ -118,8 +122,17 @@ for i in range(len(HWs_ARS_KJS_just)):
         color='grey'
     )
 
+    ax.text(
+        0.02, 0.975, '(a)',
+        transform=ax.transAxes,
+        fontsize=14,
+        fontweight='bold',
+        verticalalignment='top',
+        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='black', linewidth=1)
+    )
+
     # Create a small inset area inside the main axes
-    ax_inset = inset_axes(ax, width="18%", height="10%", loc='lower left',
+    ax_inset = inset_axes(ax, width="24%", height="11%", loc='lower left',
                         bbox_to_anchor=(0.02, 0.02, 1, 1),
                         bbox_transform=ax.transAxes, borderpad=0)
 
@@ -154,9 +167,9 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax_inset.set_clip_on(False)
 
     # --- Title and layout ---
-    ax.set_title(f"T2m (shaded), MSLP (black contours), and WS10uv (grey vectors)\n{date}")
+    ax.set_title(f"T2m (shaded), MSLP (contours), and WS10uv (vectors)\n{date}")
 
-    fig.savefig(f"fig/T2_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+ #   fig.savefig(f"fig/T2_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
     precip = PRECIP.sel(time=time_range).tp_daily_sum  # Use .tp_anomaly se for anomalia
@@ -166,11 +179,11 @@ for i in range(len(HWs_ARS_KJS_just)):
     V850_anom = V850_an.sel(time=time_range).v_anomaly[0]
 
     # --- Define projection ---
-    proj = ccrs.Mercator()
+#    proj = ccrs.Mercator()
 
     # --- Create figure ---
-    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
-
+#    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
+    ax = axs[1]
     # --- Add features ---
     ax.coastlines(resolution='50m')
     ax.add_feature(cfeature.BORDERS, linestyle=':')
@@ -213,8 +226,17 @@ for i in range(len(HWs_ARS_KJS_just)):
         color='grey'
     )
 
+    ax.text(
+        0.02, 0.975, '(b)',
+        transform=ax.transAxes,
+        fontsize=14,
+        fontweight='bold',
+        verticalalignment='top',
+        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='black', linewidth=1)
+    )
+
     # Create a small inset area inside the main axes
-    ax_inset = inset_axes(ax, width="18%", height="10%", loc='lower left',
+    ax_inset = inset_axes(ax, width="24%", height="11%", loc='lower left',
                         bbox_to_anchor=(0.02, 0.02, 1, 1),
                         bbox_transform=ax.transAxes, borderpad=0)
 
@@ -248,9 +270,9 @@ for i in range(len(HWs_ARS_KJS_just)):
     # Ensure nothing outside the box is clipped
     ax_inset.set_clip_on(False)
     # --- Title ---
-    ax.set_title(f"RRR (shaded), Z850 (black contours) and WS850uv (grey vectors)\n{date}")
+    ax.set_title(f"RRR (shaded), Z850 (contours) and WS850uv (vectors)\n{date}")
 
-    fig.savefig(f"fig/RRR_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+#    fig.savefig(f"fig/RRR_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
     u_anom = U10_an.sel(time=time_range).u10_anomaly
@@ -260,11 +282,11 @@ for i in range(len(HWs_ARS_KJS_just)):
     wind_speed = np.sqrt(u_anom**2 + v_anom**2)
 
     # --- Define Mercator projection ---
-    proj = ccrs.Mercator()
+#    proj = ccrs.Mercator()
 
     # --- Create figure and axes ---
-    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
-
+#    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
+    ax = axs[2]
     # --- Add geographic features ---
     ax.coastlines(resolution='50m')
     ax.add_feature(cfeature.BORDERS, linestyle=':')
@@ -307,8 +329,17 @@ for i in range(len(HWs_ARS_KJS_just)):
         color='grey'
     )
 
+    ax.text(
+        0.02, 0.975, '(c)',
+        transform=ax.transAxes,
+        fontsize=14,
+        fontweight='bold',
+        verticalalignment='top',
+        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='black', linewidth=1)
+    )
+
     # Create a small inset area inside the main axes
-    ax_inset = inset_axes(ax, width="18%", height="10%", loc='lower left',
+    ax_inset = inset_axes(ax, width="24%", height="11%", loc='lower left',
                         bbox_to_anchor=(0.02, 0.02, 1, 1),
                         bbox_transform=ax.transAxes, borderpad=0)
 
@@ -343,9 +374,9 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax_inset.set_clip_on(False)
 
     # --- Title and layout ---
-    ax.set_title(f"WS10 (shaded), MSLP (black contours) and WS10uv (grey vectors)\n{date}")
+    ax.set_title(f"WS10 (shaded), MSLP (contours) and WS10uv (vectors)\n{date}")
 
-    fig.savefig(f"fig/WS_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+#    fig.savefig(f"fig/WS_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
     IVTv_sel = IVTv.sel(time=time_range).viwvn_12UTC
@@ -356,11 +387,11 @@ for i in range(len(HWs_ARS_KJS_just)):
     IVT = np.sqrt(IVTu_sel**2 + IVTv_sel**2)
 
     # --- Define projection ---
-    proj = ccrs.Mercator()
+#    proj = ccrs.Mercator()
 
     # --- Create figure ---
-    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
-
+#    fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={'projection': proj})
+    ax = axs[3]
     # --- Add features ---
     ax.coastlines(resolution='50m')
     ax.add_feature(cfeature.BORDERS, linestyle=':')
@@ -407,8 +438,17 @@ for i in range(len(HWs_ARS_KJS_just)):
         regrid_shape=20, color='grey'
     )
 
+    ax.text(
+        0.02, 0.975, '(d)',
+        transform=ax.transAxes,
+        fontsize=14,
+        fontweight='bold',
+        verticalalignment='top',
+        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='black', linewidth=1)
+    )
+
     # Create a small inset area inside the main axes
-    ax_inset = inset_axes(ax, width="18%", height="10%", loc='lower left',
+    ax_inset = inset_axes(ax, width="24%", height="11%", loc='lower left',
                         bbox_to_anchor=(0.02, 0.02, 1, 1),
                         bbox_transform=ax.transAxes, borderpad=0)
 
@@ -446,6 +486,8 @@ for i in range(len(HWs_ARS_KJS_just)):
                colors='magenta', linewidths=2, transform=ccrs.PlateCarree())
 
     # --- Title ---
-    ax.set_title(f"IVT (shaded), Z500 (black contours) and IVTuv (grey vectors)\n with AR shape {date}")
+    ax.set_title(f"IVT (shaded), Z500 (contours) and IVTuv (vectors)\n with AR shape {date}")
 
-    fig.savefig(f"fig/IVT_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
+    fig.subplots_adjust(wspace=0.01, hspace=0.12)
+
+    fig.savefig(f"fig/HWs_ARs_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
