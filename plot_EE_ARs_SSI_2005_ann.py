@@ -23,14 +23,17 @@ V10_an = xr.open_dataset(filename)
 filename = '/home/cr2/cmtorres/ERA5/U10_daily_anomalies.nc'
 U10_an = xr.open_dataset(filename)
 
+filename = '/home/cr2/cmtorres/ERA5/WS10_daily_anomalies.nc'
+WS10_an = xr.open_dataset(filename)
+
 filename = '/home/cr2/cmtorres/ERA5/V850_daily_anomalies.nc'
 V850_an = xr.open_dataset(filename)
 
 filename = '/home/cr2/cmtorres/ERA5/U850_daily_anomalies.nc'
 U850_an = xr.open_dataset(filename)
 
-filename = '/home/cr2/cmtorres/ERA5/precip_daily_sum.nc'
-PRECIP = xr.open_dataset(filename)*1000
+filename = '/home/cr2/cmtorres/ERA5/precip_daily_anomalies.nc'
+PRECIP = xr.open_dataset(filename)
 
 filename = '/home/cr2/cmtorres/ERA5/IVTu_12UTC.nc'
 IVTu = xr.open_dataset(filename)
@@ -40,11 +43,14 @@ filename = '/home/cr2/cmtorres/ERA5/IVTv_12UTC.nc'
 IVTv = xr.open_dataset(filename)
 IVTv['time'] = ('time', IVTv['time'].dt.floor('D').data)
 
+filename = '/home/cr2/cmtorres/ERA5/IVT_daily_anomalies.nc'
+IVT = xr.open_dataset(filename)
+
 filename = '/home/cr2/cmtorres/ERA5/MSLP_daily_anomalies.nc'
 mslp_an = xr.open_dataset(filename)/100
 
 
-filename = '/home/cr2/cmtorres/ARs_DATA/vLHT/vLHT_1999.nc'
+filename = '/home/cr2/cmtorres/ARs_DATA/vLHT/vLHT_2005.nc'
 
 AR_shape = xr.open_dataset(filename)
 AR_shape = AR_shape.sel(time=AR_shape.time.dt.hour == 12)  # Keep only 12 UTC
@@ -54,7 +60,8 @@ AR_shape.coords['lon'] = (AR_shape.coords['lon'] + 180) % 360 - 180
 AR_shape = AR_shape.sortby(AR_shape.lon)
 AR_shape = AR_shape.sel(lon=slice(-150, -30), lat=slice(-30, -75))
 
-HWs_ARS_KJS_just = pd.DataFrame({'date': pd.date_range(start='1999-11-12', end='1999-11-20', freq='1D')})
+#HWs_ARS_KJS_just = pd.DataFrame({'date': pd.date_range(start='1999-11-12', end='1999-11-14', freq='1D')})
+HWs_ARS_KJS_just = pd.DataFrame({'date': pd.date_range(start='2005-02-09', end='2005-02-20', freq='1D')})
 #HWs_ARS_KJS_just['date'][1]
 
 for i in range(len(HWs_ARS_KJS_just)):
@@ -167,12 +174,12 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax_inset.set_clip_on(False)
 
     # --- Title and layout ---
-    ax.set_title(f"T2m (shaded), MSLP (contours), and WS10uv (vectors)\n{date}")
+    ax.set_title(f"T2m (shaded), MSLP (contours), and UV10 (vectors)\n{date}")
 
  #   fig.savefig(f"fig/T2_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
-    precip = PRECIP.sel(time=time_range).tp_daily_sum  # Use .tp_anomaly se for anomalia
+    precip = PRECIP.sel(time=time_range).tp_anomaly  # Use .tp_anomaly se for anomalia
     mslp_anom = mslp_an.sel(time=time_range).msl_anomaly
     Z850_anom = Z850_an.sel(time=time_range).z_anomaly[0]#*100
     U850_anom = U850_an.sel(time=time_range).u_anomaly[0]
@@ -193,16 +200,16 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot precipitation (mm) ---
-    levels_precip = np.arange(0, 8.1, 0.5)
-    cmap_precip = plt.get_cmap("Blues")
+    levels_precip = np.arange(-5, 5.5, 0.5)
+    cmap_precip = plt.get_cmap("BrBG")
     precip_plot = ax.contourf(
         precip.longitude, precip.latitude, precip,  # Convert from m to mm
         levels=levels_precip,
         cmap=cmap_precip,
-        extend='max',
+        extend='both',
         transform=ccrs.PlateCarree()
     )
-    cbar = plt.colorbar(precip_plot, ax=ax, orientation='vertical', pad=0.02, label="Precipitation (mm/day)")
+    cbar = plt.colorbar(precip_plot, ax=ax, orientation='vertical', pad=0.02, label="RRR Anomaly (mm/day)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
     levels_z500 = [lev for lev in np.arange(-175, 176, 25) if lev != 0]  # Exclude zero
@@ -270,7 +277,7 @@ for i in range(len(HWs_ARS_KJS_just)):
     # Ensure nothing outside the box is clipped
     ax_inset.set_clip_on(False)
     # --- Title ---
-    ax.set_title(f"RRR (shaded), Z850 (contours) and WS850uv (vectors)\n{date}")
+    ax.set_title(f"RRR (shaded), Z850 (contours) and UV850 (vectors)\n{date}")
 
 #    fig.savefig(f"fig/RRR_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
@@ -279,7 +286,7 @@ for i in range(len(HWs_ARS_KJS_just)):
     v_anom = V10_an.sel(time=time_range).v10_anomaly
 
     # --- Compute wind speed ---
-    wind_speed = np.sqrt(u_anom**2 + v_anom**2)
+    wind_speed = WS10_an.sel(time=time_range).ws10_anomaly
 
     # --- Define Mercator projection ---
 #    proj = ccrs.Mercator()
@@ -296,16 +303,16 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot wind speed as color fill ---
-    levels_ws = np.arange(0, 15, 1)
-    cmap_ws = plt.get_cmap("plasma")
+    levels_ws = np.arange(-8, 9, 1)
+    cmap_ws = plt.get_cmap("PuOr")
     ws_plot = ax.contourf(
         wind_speed.longitude, wind_speed.latitude, wind_speed,
         levels=levels_ws,
         cmap=cmap_ws,
-        extend='max',
+        extend='both',
         transform=ccrs.PlateCarree()
     )
-    cbar = plt.colorbar(ws_plot, ax=ax, orientation='vertical', pad=0.02, label="Wind Speed (m/s)")
+    cbar = plt.colorbar(ws_plot, ax=ax, orientation='vertical', pad=0.02, label="WS10 Anomaly (m/s)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
     levels_z500 = [lev for lev in np.arange(-40, 41, 5) if lev != 0]  # Exclude zero
@@ -374,17 +381,18 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax_inset.set_clip_on(False)
 
     # --- Title and layout ---
-    ax.set_title(f"WS10 (shaded), MSLP (contours) and WS10uv (vectors)\n{date}")
+    ax.set_title(f"WS10 (shaded), MSLP (contours) and UV10 (vectors)\n{date}")
 
 #    fig.savefig(f"fig/WS_{date}.png", dpi = 300, facecolor='w', bbox_inches = 'tight', pad_inches = 0.1)
 
     # --- Subset and average data over time range ---
     IVTv_sel = IVTv.sel(time=time_range).viwvn_12UTC
     IVTu_sel = IVTu.sel(time=time_range).viwve_12UTC
+    IVT_sel  = IVT.sel(time=time_range).ivt_anomaly 
     Z500_anom = Z500_an.sel(time=time_range).z_anomaly[0]
 
     # --- Compute wind speed ---
-    IVT = np.sqrt(IVTu_sel**2 + IVTv_sel**2)
+    #IVT = np.sqrt(IVTu_sel**2 + IVTv_sel**2)
 
     # --- Define projection ---
 #    proj = ccrs.Mercator()
@@ -401,16 +409,16 @@ for i in range(len(HWs_ARS_KJS_just)):
     ax.set_extent([-120, -30, -70, -30], crs=ccrs.PlateCarree())
 
     # --- Plot precipitation (mm) ---
-    levels_precip = np.arange(100, 701, 50)
-    cmap_precip = plt.get_cmap("rainbow")
+    levels_precip = np.arange(-200, 201, 25)
+    cmap_precip = plt.get_cmap("Spectral")
     precip_plot = ax.contourf(
-        IVT.longitude, IVT.latitude, IVT,  # Convert from m to mm
+        IVT_sel.longitude, IVT_sel.latitude, IVT_sel,  # Convert from m to mm
         levels=levels_precip,
         cmap=cmap_precip,
-        extend='max',
+        extend='both',
         transform=ccrs.PlateCarree()
     )
-    cbar = plt.colorbar(precip_plot, ax=ax, orientation='vertical', pad=0.02, label="IVT (kg/m s)")
+    cbar = plt.colorbar(precip_plot, ax=ax, orientation='vertical', pad=0.02, label="IVT Anomaly (kg/m s)")
 
     # --- Plot Z500 anomalies as black contours (dashed for negative, no zero line) ---
     levels_z500 = [lev for lev in np.arange(-250, 250, 50) if lev != 0]  # Exclude zero
